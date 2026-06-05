@@ -1326,13 +1326,13 @@ const submitBtn = document.getElementById('submitBtn');
 contactForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    // Disable button and show loading state
+    // Disable button and update text
     submitBtn.disabled = true;
     submitBtn.textContent = 'Sending...';
-    
-    // Clear previous statuses
+
+    // Reset status box styling and clear text
+    formStatus.style.display = ''; 
     formStatus.className = 'form-status';
-    formStatus.style.display = ''; // Removes inline styles so your CSS can work
     formStatus.textContent = '';
 
     try {
@@ -1348,29 +1348,38 @@ contactForm.addEventListener('submit', async (e) => {
             formStatus.textContent = 'Message sent! Thank you for reaching out. I will get back to you soon.';
             contactForm.reset();
         } else {
-            // Formspree validation error
-            const data = await response.json().catch(() => ({}));
-            const msg = data.errors ? data.errors.map(err => err.message).join(', ') : 'Something went wrong.';
+            // Server responded with an error status (e.g., 404, 400)
+            let errorMsg = 'Something went wrong.';
+            try {
+                const data = await response.json();
+                if (data.errors && data.errors.length > 0) {
+                    errorMsg = data.errors.map(err => err.message).join(', ');
+                } else if (data.error) {
+                    errorMsg = data.error;
+                }
+            } catch (parseError) {
+                // Handles instances where Formspree returns an HTML error page instead of JSON
+                errorMsg = `Server returned status ${response.status}. Please check your Formspree endpoint ID.`;
+            }
+            
             formStatus.className = 'form-status error';
-            formStatus.textContent = 'Error: ' + msg + ' Please try again.';
+            formStatus.textContent = 'Error: ' + errorMsg;
         }
     } catch (err) {
-        // Network error
+        // Network or CORS restrictions
         formStatus.className = 'form-status error';
         formStatus.textContent = 'Network error. Please check your connection and try again.';
     } finally {
-        // Re-enable button
+        // Re-enable submission button
         submitBtn.disabled = false;
         submitBtn.textContent = 'Send Message';
         
-        // Hide the status message after 6 seconds
+        // Hide notification window after 6 seconds using the base CSS rule instead of forced inline styles
         setTimeout(() => {
             formStatus.className = 'form-status';
-            formStatus.style.display = ''; 
         }, 6000);
     }
 });
-
 // ========================================
 // Scroll-to-Top Button
 // ========================================
