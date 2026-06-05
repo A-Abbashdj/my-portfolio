@@ -1326,10 +1326,14 @@ const submitBtn = document.getElementById('submitBtn');
 contactForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
+    // Disable button and show loading state
     submitBtn.disabled = true;
     submitBtn.textContent = 'Sending...';
+    
+    // Clear previous statuses
     formStatus.className = 'form-status';
-    formStatus.style.display = 'none';
+    formStatus.style.display = ''; // Removes inline styles so your CSS can work
+    formStatus.textContent = '';
 
     try {
         const response = await fetch(contactForm.action, {
@@ -1339,24 +1343,30 @@ contactForm.addEventListener('submit', async (e) => {
         });
 
         if (response.ok) {
+            // Success response
             formStatus.className = 'form-status success';
             formStatus.textContent = 'Message sent! Thank you for reaching out. I will get back to you soon.';
             contactForm.reset();
         } else {
+            // Formspree validation error
             const data = await response.json().catch(() => ({}));
             const msg = data.errors ? data.errors.map(err => err.message).join(', ') : 'Something went wrong.';
             formStatus.className = 'form-status error';
             formStatus.textContent = 'Error: ' + msg + ' Please try again.';
         }
     } catch (err) {
+        // Network error
         formStatus.className = 'form-status error';
         formStatus.textContent = 'Network error. Please check your connection and try again.';
     } finally {
+        // Re-enable button
         submitBtn.disabled = false;
         submitBtn.textContent = 'Send Message';
+        
+        // Hide the status message after 6 seconds
         setTimeout(() => {
             formStatus.className = 'form-status';
-            formStatus.style.display = 'none';
+            formStatus.style.display = ''; 
         }, 6000);
     }
 });
